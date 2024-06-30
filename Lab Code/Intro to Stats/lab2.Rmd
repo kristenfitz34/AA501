@@ -1,0 +1,146 @@
+---
+title: "Lab 2"
+author: "Kristen Fitzgerald"
+subtitle: "AA 501"
+date: '2024-06-26'
+output: pdf_document
+header-includes:
+  - \usepackage{setspace}
+  - \doublespacing
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(UsingR)
+library(ggplot2)
+library(dplyr)
+data(normtemp)
+data(AirPassengers) 
+```
+
+# Question 1
+
+Revisit the NormTemp dataset from Lab 1, where we examined the observed
+mean body temperature (`temperature`) in comparison to the well-known
+“average” of 98.6.
+
+__a.__ Perform a statistical test (alpha = 0.05) to determine whether this 
+well known number is actually the mean body temperature. What is your
+p-value? Explain in words what this p-value means. What is your
+conclusion?
+
+__Solution:__ First, we check normality and find that `temperature` is normally
+distributed. We define our hypotheses to be $H_{0}: \mu = 98.6$ vs. 
+$H_{A}: \mu \ne 98.6$. We find a p-value of less than 0.001. This means that 
+there is essentially a zero percent chance of observing a mean temperature 98.6
+using this data. Thus, we reject the null hypothesis and conclude that there is 
+statistically significant evidence to conclude that the mean mean body 
+temperature differs from 98.6.  
+
+\singlespacing
+
+```{r Q1a.norm}
+ggplot(normtemp, aes(sample = temperature)) +
+  stat_qq() + 
+  stat_qq_line()
+```
+
+
+```{r Q1a.test}
+t.test(normtemp$temperature, mu = 98.6)
+```
+
+\doublespacing
+
+\newpage
+
+__b.__ Give the 95% Confidence Interval for temperature. Explain in words what
+a 95% confidence interval represents.
+
+__Solution:__ We are 95% confident that the true mean body temperature falls
+between 98.12200 and 98.37646. 
+
+\bigskip
+
+__c.__ If we restrict our analysis to only the females in this dataset, would our
+conclusion change? 1 = male, 2 = female
+
+__Solution:__ No, our conclusion does not change. There is statistically
+significant evidence to conclude that the average female body differs from 98.6.
+
+\singlespacing
+
+```{r 2c}
+normtemp_female <- normtemp %>%
+  filter(gender == 2)
+
+t.test(normtemp_female$temperature, mu = 98.6)
+```
+
+\doublespacing
+
+\bigskip
+
+__d.__ Is there any difference (alpha=0.05) in temperature between the two
+genders recorded in this dataset (be sure to look at assumptions
+and perform the correct test)?
+
+__Solution:__ First, we check normality and conclude that both genders 
+approximately follow a normal distribution. Next, we check if temperature has
+equal variance across both groups. We find that there is equal variance across
+groups. We perform a two sample t-test and find a p-value of 0.02393. Thus,
+we conclude that there is a statistically significant difference between average
+body temperature in males and females.
+
+\singlespacing
+
+```{r Q1D.Assumptions}
+shapiro.test(normtemp$temperature[normtemp$gender == "1"])
+shapiro.test(normtemp$temperature[normtemp$gender == "2"])
+
+var.test(temperature ~ gender, data = normtemp) 
+```
+
+```{r Q1D.test}
+t.test(temperature ~ gender, data = normtemp, var.equal = TRUE)
+```
+
+\doublespacing
+
+\newpage
+
+# Question 2
+
+The Airline dataset contains information regarding the number of international
+airline travelers (variable air) across different months of the year from
+1949-1960. 
+
+__a.__ We are interested in knowing if during this time period there was a
+significant difference between air travel in the Summer months of June,
+July, and August vs. the remainder of the year? Use a statistical
+hypothesis test (alpha=0.05) to support your answer.
+
+__Solution:__ The normality assumption fails for non-summer months. We will use
+a Wilcoxin rank test. We find that the difference between air travel in the
+summer and non-summer months is significantly different. 
+
+```{r Q2, include=F}
+library(tseries)
+library(forecast)
+cycle(AirPassengers)
+
+air1 = data.frame(AirPassengers)
+air2 = air1 %>% mutate(summer=ifelse(cycle(AirPassengers) %in% 6:8,1,0))
+```
+
+\singlespacing
+
+```{r Q2.Assumptions}
+shapiro.test(air2$AirPassengers[air2$summer == "1"])
+shapiro.test(air2$AirPassengers[air2$summer == "0"])
+```
+
+```{r Q2.test}
+wilcox.test(AirPassengers ~ summer, data=air2)
+```
+

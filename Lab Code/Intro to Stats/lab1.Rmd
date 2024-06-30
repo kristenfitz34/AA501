@@ -1,0 +1,146 @@
+---
+title: "Lab 1"
+author: "Kristen Fitzgerald"
+date: '2024-06-25'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# install.packages('UsingR')
+# install.packages("AmesHousing")
+library(AmesHousing)
+library(UsingR)
+library(ggplot2)
+data(normtemp)
+ames <- make_ordinal_ames()
+```
+
+# Question 1
+
+Use the normtemp dataset to answer the following:
+
+__a.__ Determine the following statistics for the variable temperature: Min, Max
+mean, and standard deviation
+
+```{r Q1a}
+summary(normtemp$temperature)
+```
+
+\newpage
+
+__b.__ Does temperature appear to be normally distributed?
+
+__Solution:__ Yes, temperature does appear to be normally distributed.
+
+```{r Q1b}
+ggplot(normtemp) +
+  geom_histogram(aes(x = temperature), bins = sqrt(130)) +
+  labs(x = "Temperature")
+
+
+ggplot(normtemp, aes(sample = temperature)) +
+  stat_qq() +
+  stat_qq_line()
+```
+
+\newpage
+
+__c.__ Create box plots for temperature. Are there any outliers? Display 
+a reference line at 98.6.
+
++ For horizontal line: + geom_hline(yintercept=98.6)
+
++ For vertical line: + geom_vline(xintercept=98.6)
+
+Does the median body temperature seem to be 98.6 degrees?
+
+__Solution:__ Yes, there are three outliers. No, the median is less than 98.6.
+
+```{r Q1c}
+ggplot(normtemp, aes(x = temperature)) +
+  geom_boxplot() +
+  geom_vline(xintercept=98.6)
+```
+
+\newpage
+
+# Question 2
+
+Using the Ameshousing dataset from our in-class examples, run some
+distributional analysis on Sale_Price, Log(Sale_Price), and Gr_Liv_Area.
+
+__a.__ Create histograms of these three variables.
+
++ Overlay a kernel density estimator of the variables.
+
+```{r Q2a}
+ggplot(ames, aes(x = Sale_Price)) +
+  geom_histogram(aes(y=..density..), alpha=0.5, bins = sqrt(2930)) +
+  labs(x = "Sale Price") +
+  geom_density(alpha=0.5, col="red")
+  
+ggplot(ames, aes(x = log(Sale_Price))) +
+  geom_histogram(aes(y=..density..), alpha=0.5, bins = sqrt(2930)) +
+  labs(x = "Logarithm of Sale Price") +
+  geom_density(alpha=0.5, col="red")
+
+ggplot(ames, aes(x = Gr_Liv_Area)) +
+  geom_histogram(aes(y=..density..), alpha=0.5, bins = sqrt(2930)) +
+  labs(x = "Ground Living Area") +
+  geom_density(alpha=0.5, col="red")
+```
+
+\newpage
+
+__b.__ Create a QQ Plot for both Sale_Price and Log(Sale_Price). Based on
+these exploratory procedures, which version of the price information
+(Sale_Price or Log(Sale_Price)) would you say is closer to being normally
+distributed?
+
+__Solution:__ The logarithm of `Sale_Price` is more normally distributed.
+
+```{r Q2b}
+ggplot(ames, aes(sample = Sale_Price)) +
+  stat_qq() +
+  geom_qq_line()
+
+ggplot(ames, aes(sample = log(Sale_Price))) +
+  stat_qq() +
+  geom_qq_line()
+```
+
+\newpage
+
+__3.__ Using the Ameshousing dataset from our in-class examples, determine the
+following:
+
+__a.__ What type of variables are each of these columns (Nominal, Ordinal, or
+Continuous/Quantitative)? Keep in mind that the way they are
+represented in the R dataset may not be appropriate, so you should make
+this determination using your own judgement based on the data you are
+looking at.
+
+- __Overall_Qual__
+    - Represented as Ordinal
+    - Should be Ordinal
+
+- __Lot_Shape__
+    - Represented as Ordinal
+    - Should be Ordinal
+
+- __Heating_QC__
+    - Represented as Ordinal
+    - Should be Ordinal
+
+- __Lot_Area__
+    - Represented as numeric
+    - Should be numeric
+
+```{r Q3}
+class(ames$Overall_Qual)
+class(ames$Lot_Shape)
+class(ames$Heating_QC)
+class(ames$Lot_Area)
+```
+

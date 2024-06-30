@@ -1,0 +1,11 @@
+---
+title: "Breakout Session 2"
+author: "Kristen Fitzgerald"
+date: '2024-06-26'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+

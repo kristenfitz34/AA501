@@ -1,0 +1,227 @@
+---
+title: "Lab 4"
+subtitle: "AA 501"
+author: "Kristen Fitzgerald"
+date: "2024-06-28"
+output: pdf_document
+header-includes:
+  - \usepackage{setspace}
+  - \doublespacing
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(AppliedPredictiveModeling)
+data(FuelEconomy)
+icecream <- read.csv("https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/icecream.csv")
+minntemp <- read.csv("https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/minntemp.csv", sep = " ")
+```
+
+# Question 1
+“The http://fueleconomy.gov website, run by the U.S. Department of
+Energy’s Office of Energy Efficiency and Renewable Energy and the U.S.
+Environmental Protection Agency, lists different estimates of fuel economy
+for passenger cars and trucks. For each vehicle, various characteristics are
+recorded such as the engine displacement or number of cylinders. Along
+with these values, laboratory measurements are made for the city and
+highway miles per gallon (MPG) of the car.”
+
+Predictors extracted from the website include: `EngDispl`, `NumCyl`,
+`Transmission`, `AirAspirationMethod`, `NumGears`, `TransLockup`,
+`TransCreeperGear`, `DriveDesc`, `IntakeValvePerCyl`, `ExhaustValvesPerCyl`,
+`CarlineClassDesc`, `VarValveTiming` and `VarValveLift.` The response variable
+is `FE`, which is the unadjusted highway data.
+
+To access this data set, you will need to install the AppliedPrectiveModeling
+library. The following code will produce 3 data sets (cars2010, cars2011 and
+cars2012, which are the training, validation and test data sets, respectively).
+library(AppliedPredictiveModeling)
+data(FuelEconomy)
+
+__a.__ Generate scatter plots and correlations for the variables `EngDispl`,
+`NumCyl`, `ExhaustValvesPerCyl` and the `VarValveTiming`
+versus the target variable, `FE`
+
++ Can linear relationships adequately describe these relationships?
+
++ Are there any outliers that you should investigate?
+
++ What variable has the highest correlation with FE?
+
++ What is the p-value for that correlation coefficient? Is it statistically
+significant at the 0.05 level? What can you conclude?
+
+__Solution:__ `EngDispl` and `NumCyl` can adequately describe the relationship
+when compared to fuel efficiency. `EngDispl` has the highest correlation with FE.
+The p-value for the correlation coefficient between `EngDispl` and `FE` is 
+< 2.2e-16. Thus, it is statistically significant and we can conclude that there
+is a linear relationship between  `EngDispl` and `FE`.
+
+\newpage
+
+\singlespacing
+
+```{r 1a.cor}
+cor(cars2010[, c("EngDispl", "NumCyl", "ExhaustValvesPerCyl", 
+                   "VarValveTiming","FE")])
+```
+
+
+```{r 1a.plots}
+pairs(cars2010[, c("EngDispl", "NumCyl", "ExhaustValvesPerCyl", 
+                   "VarValveTiming","FE")])
+```
+
+\newpage
+
+```{r 1a.pval}
+cor.test(cars2010$EngDispl, cars2010$FE)
+```
+
+\doublespacing
+
+__b.__ Generate correlations among all of the variables in the previously
+mentioned variables, minus the target, `FE.` Are there any notable
+relationships?
+
+__Solution:__ There is a very significant linear relationship between `EngDispl`
+and `NumCyl`.
+
+\singlespacing
+
+```{r 1b}
+cor(cars2010[, c("EngDispl", "NumCyl", "ExhaustValvesPerCyl", 
+                   "VarValveTiming")])
+```
+
+\doublespacing
+
+__c.__ Fit a simple linear regression model with `FE` as the response variable
+and `EngDispl` as the predictor.
+
++ What is the value of the F Statistic and the associated p-value? How
+would you interpret this with regard to the null hypothesis?
+
++ Write the predicted regression equation.
+
++ What is the value of R-square? How would you interpret this?
+
+__Solution:__ The F Statistic is 1803 with a p-value of < 2.2e-16. For every
+one unit increase in engine displacement the fuel efficiency is expected to 
+decrease by -4.5209. R-squared is 0.62, this means that 62% of the variability 
+observed in fuel efficiency is explained by engine displacement.
+
+\begin{center}
+
+$\hat{y} = 50.5632 - 4.5209*EngDispl$
+
+\end{center}
+
+\singlespacing
+
+```{r 1c.plots}
+slr <- lm(FE ~ EngDispl, data=cars2010)
+par(mfrow=c(2,2))
+plot(slr)
+```
+
+```{r 1c.slr}
+summary(slr)
+```
+
+\doublespacing
+
+\newpage
+
+# Question 2
+
+The IceCream dataset has two columns, `Sales` which gives the total daily
+sales of a local ice cream shop in hundreds of dollars, and
+`Temperature` which reflects the daily high temperature.
+
+__a.__ Run a regression analysis predicting daily sales from temperature.
+
++ Are the errors of your model normally distributed? What evidence
+would you cite here?
+
++ Do you see evidence of any relationship between temperature and
+sales? What statistical evidence (think: p-value) would you cite
+here?
+
++ What is the parameter estimate for temperature in the model
+equation? Interpret this parameter using a sentence.
+
+__Solution:__ The residuals of the model are approximately normally distributed.
+Looking at a qq-plot they roughly follow the plot line with only a few outliers.
+Yes, there is a significant linear relationship between. After running Pearson's 
+correlation test we find a p-value of 1.572e-11, thus indicating a linear 
+relationship between `Temperature` and `Sales`. The parameter estimate for 
+`Temperature` is 1.0901. Meaning that for every 1 degree increase in 
+temperature we expect total daily sales to increase by $110.
+
+\singlespacing
+
+```{r 2a.plots}
+slr <- lm(Sales ~ Temperature, data=icecream)
+par(mfrow=c(2,2))
+plot(slr)
+```
+
+```{r 2a.Pearson}
+cor.test(icecream$Temperature, icecream$Sales)
+```
+
+\newpage
+
+```{r 2a.slr}
+summary(slr)
+```
+
+\doublespacing
+
+\newpage
+
+# Question 3
+
+The dataset MinnTemp has information for the daily average temperature for
+a weather station in Minneapolis (when reading in this data set, be
+sure to tell it that the separator is a space, i.e. sep=” “). The variables
+`Temp` and `Time` provide the temperature and time measurements
+respectively. Time is measured in hours since the study began.
+
+__a.__ Perform a regression analysis predicting temperature using the time
+variable.
+
++ Are the errors of your model normally distributed? What evidence
+would you cite here?
+
++ Do you see violations of our assumptions for simple linear regression?
+If so, what problems do you see?
+
++ Is there statistical evidence that time is related to temperature at the
+confidence level of 0.05? If so, describe the relationship in a
+sentence, if not discuss what your next steps in this analysis
+might be.
+
+__Solution:__ Yes, looking at the qq-plot the data looks very normally 
+distributed. It appears that the residuals do not have equal variance, they
+appear to be quadratic, thus making them concave up. No, there is not 
+significant evidence to conclude that there is linear relationship between
+time and temperature, this is likely due to it being a quadratic relationship.
+Next steps may include transforming the data to negate the quadratic
+relationship or refitting a new model that handles quadratic data.
+
+\newpage
+
+\singlespacing
+
+```{r 3a.Normality}
+slr <- lm(Temp ~ Time, data=minntemp)
+par(mfrow=c(2,2))
+plot(slr)
+```
+
+```{r 3a.corr}
+cor.test(minntemp$Time, minntemp$Temp)
+```

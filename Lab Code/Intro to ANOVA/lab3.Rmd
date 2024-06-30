@@ -1,0 +1,238 @@
+---
+title: "Lab 3"
+subtitle: "AA 501"
+author: "Kristen Fitzgerald"
+date: '2024-06-27'
+output: pdf_document
+header-includes:
+  - \usepackage{setspace}
+  - \doublespacing
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+garlic <- read.csv("https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/garlic.csv")
+bottle <- read.csv("https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/bottle.csv")
+trials <- read.csv("https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/trials.csv")
+garlic$Fertilizer <- factor(garlic$Fertilizer)
+bottle$Line <- factor(bottle$Line)
+library(ggpubr)
+library(ggplot2)
+library(car)
+library(stats)
+library(DescTools)
+library(dunn.test)
+```
+
+# Question 1 
+
+Use the dataset Garlic to perform an ANOVA. This dataset has information on
+the weight of garlic bulbs (`bulbwt`) for 32 different garlic plants. Each
+garlic plant was initially treated with 1 of 4 types of `fertilizer.` The
+purpose of the experiment is to determine whether or not there is any
+difference in the resulting bulb weight when a garlic plant is treated with
+a different fertilizer.
+
+__a.__ Test the hypothesis that the means of bulb weight are equal
+regardless of the fertilizer used.
+
++ Verify that the assumption of normality in each sample you are
+testing. Are you comfortable with this assumption?
+
++ Verify that the groups satisfy the assumption of equal variance.
+
++ State your conclusion to the hypothesis test (alpha = 0.05)
+
+__Solution:__ The data satisfies the normality & equal variance assumption.
+We reject the null hypothesis, there is significant evidence to conclude that 
+the average bulb weight differs depending on the fertilizer used.
+
+## Verifying Normality
+
+\singlespacing
+
+```{r 1a.Norm}
+model <- aov(BulbWt ~ Fertilizer, data=garlic)
+
+ggqqplot(residuals(model))
+
+shapiro.test(residuals(model))
+```
+
+\doublespacing
+
+\newpage
+
+## Veryifying Equal Variances
+
+```{r 1a.Var}
+leveneTest(BulbWt ~ Fertilizer, data=garlic)
+
+ggplot(model, aes(.fitted, .resid)) + 
+  geom_point() +
+  geom_hline(yintercept = 0)+
+  labs(title = 'Residual vs. Fitted Values Plot',
+       x = 'Fitted Values', y = 'Residuals')
+```
+
+\newpage
+
+## Basic ANOVA
+
+```{r 1a.ANOVA}
+model<-aov(BulbWt ~ Fertilizer, data=garlic)
+
+summary(model)
+```
+
+\doublespacing
+
+\newpage
+
+__b.__ If you were to test if each type of fertilizer were different from each
+other fertilizer (pairwise), how many hypothesis tests would
+you be running?
+
+__Solution:__ With for groups to compare you would need six hypothesis tests.
+
+__c.__ If the probability of incorrectly rejecting a true null hypothesis is
+0.05, and each hypothesis test is considered independent,
+what is the probability that you incorrectly reject at least one
+true hypothesis? How do we solve this problem when we’re
+performing post-hoc analysis in ANOVA?
+
+__Solution:__ The experimentwise error rate at a 0.05 level would be 0.26.
+We solve this problem by using pairwise or control group comparison methods.
+
+__d.__ Which fertilizers are statistically different from each other and which
+fertilizers do not appear to produce different bulb weights?
+
+__Solution:__ Fertilizer 4 differs significantly from groups 1 and 3.
+
+\singlespacing
+
+```{r 1d.Tukey}
+tukey.garlic <- TukeyHSD(model)
+print(tukey.garlic)
+par(mar=c(4,10,4,2))
+plot(tukey.garlic, las=1)
+```
+
+\newpage
+
+# Question 2
+
+The Bottle dataset contains observations from a factory that is producing
+plastic water bottles along 3 different assembly lines.The number of units 
+produced by each assembly line are given for a
+number of days. The manufacturer wants to know if the assembly lines are
+producing the same number of bottles. He suspects that 2 of his lines are
+significantly better than the third, but he has had trouble demonstrating this
+due to the variability in production. Confirm or deny his hypothesis using
+the data provided. Be sure to verify your assumptions before proceeding
+with the analysis.
+
+__Solution:__ Group 3 differs significantly from Groups 1 and 2. Thus,
+confirming his hypothesis that two lines are performing better. 
+
+## Verifying Normality
+
+\singlespacing
+
+```{r 2a.Norm}
+model <- aov(Units ~ Line, data=bottle)
+
+ggqqplot(residuals(model))
+
+shapiro.test(residuals(model))
+```
+
+\newpage
+
+## Veryifying Equal Variances
+
+```{r 2a.Var}
+leveneTest(Units ~ Line, data=bottle)
+
+ggplot(model, aes(.fitted, .resid)) + 
+  geom_point() +
+  geom_hline(yintercept = 0)+
+  labs(title = 'Residual vs. Fitted Values Plot',
+       x = 'Fitted Values', y = 'Residuals')
+```
+
+\newpage
+
+## Basic ANOVA
+
+```{r 2a.ANOVA}
+model<-aov(Units ~ Line, data=bottle)
+
+summary(model)
+```
+
+## Post Hoc Test
+
+```{r 2d.Tukey}
+tukey.bottle <- TukeyHSD(model)
+print(tukey.bottle)
+par(mar=c(4,10,4,2))
+plot(tukey.bottle, las=1)
+```
+
+\doublespacing
+
+# Question 3
+
+The `Trials` dataset contains information from a clinical trial for blood pressure
+medicine. There are two different drugs being compared to a placebo, 1 of which 
+is already FDA approved. The study aims to confirm that the new drug
+(treatment = New Drug) is effective at lowering blood pressure when
+compared to the placebo. Perform an ANOVA and post-hoc analysis which
+compares the reduction in blood-pressure (`BPChange`) of the new drug
+and the existing drug (treatment = Approved Drug) to the placebo. Do
+both drugs outperform the placebo in blood-pressure reduction? Be sure
+to verify your assumptions before proceeding with the analysis.
+
+## Verifying Normality
+
+\singlespacing
+
+```{r 3.Norm}
+model <- aov(BPChange ~ Treatment, data=trials)
+
+ggqqplot(residuals(model))
+
+shapiro.test(residuals(model))
+```
+
+\newpage
+
+## Veryifying Equal Variances
+
+```{r 3.Var}
+leveneTest(BPChange ~ Treatment, data=trials)
+
+ggplot(model, aes(.fitted, .resid)) + 
+  geom_point() +
+  geom_hline(yintercept = 0)+
+  labs(title = 'Residual vs. Fitted Values Plot',
+       x = 'Fitted Values', y = 'Residuals')
+```
+
+
+\newpage
+
+## Welch's ANOVA
+
+```{r 3.ANOVA}
+oneway.test(BPChange ~ Treatment, data = trials, var.equal = FALSE)
+```
+
+## Post-Hoc Test
+
+```{r 3.PostHoc}
+trials$Treatment <- ifelse(trials$Treatment=="Placebo","aPlacebo", trials$Treatment)
+DunnettTest(x = trials$BPChange, g = trials$Treatment)
+```
+
