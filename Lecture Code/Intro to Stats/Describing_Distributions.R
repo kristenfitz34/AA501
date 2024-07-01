@@ -9,7 +9,6 @@
 ################################################################################
 
 # install packages
-install.packages("AmesHousing")
 library(AmesHousing)
 library(ggplot2)
 
