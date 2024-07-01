@@ -1,0 +1,169 @@
+---
+title: "Lab 5"
+subtitle: "AA 501"
+author: "Kristen Fitzgerald"
+date: "2024-07-01"
+output: pdf_document
+header-includes: 
+  - \usepackage{setspace}
+  - \doublespacing
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(tidyverse)
+
+drugdose <- read.csv("https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/drug.csv")
+drugdose$DrugDose <- factor(drugdose$DrugDose)
+
+disks <- read.csv("https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/disks.csv")
+disks$Brand <- factor(disks$Brand)
+```
+
+# Question 1
+
+Data were collected in an effort to determine whether different dose levels of a
+given drug have an effect on blood pressure for people with one of three types 
+of heart disease. To obtain this data, submit the following code:
+
+This dataset has the following variables:
+
++ `DrugDose`: dosage level of drug (1, 2, 3, 4), corresponding to (Placebo, 
+50mg, 100mg, 200mg)
+
++ `Disease`: heart disease category
+
++ `BloodP`: change in diastolic blood pressure after 2 weeks of treatment
+
+__a.__ Examine the data with a side by side bar chart. Put `BloodP` on the Y axis,
+`DrugDose` on the X axis, and stratify by `Disease`. What information can you
+obtain from looking at the data?
+
+__Solution:__ 
+
+\singlespacing
+
+```{r 1a}
+drug_sum <- drugdose %>%
+ group_by(DrugDose, Disease) %>%
+ summarise(mean = mean(BloodP),
+ sd = sd(BloodP),
+ max = max(BloodP),
+ min = min(BloodP),
+ n = n())
+
+ggplot(drug_sum, aes(x=DrugDose, y=mean, fill = Disease)) +
+    geom_bar(stat = "identity", position = position_dodge())
+```
+
+\newpage
+
+\doublespacing
+
+__b.__ Run a 2-Way ANOVA, making sure to include an interaction term if the 
+graphical analyses that you performed previously indicate that might be
+advisable (HINT: Make sure `DrugDose` is a factor in your model since it is
+stored as a number). What conclusions can you reach at this point?
+
+__Solution:__ We see that the interaction between `DrugDose` and `Disease` is
+statistically significant. Meaning that the impact of `Disease` on `BloodP` has
+differs across levels of `DrugDose`.
+
+\singlespacing
+
+```{r 1b}
+drug.anova <- aov(BloodP ~ DrugDose*Disease, data=drugdose)
+summary(drug.anova)
+```
+
+\doublespacing
+
+__c.__ If an interaction is required in the previous piece, investigate the 
+differences in drug dose by performing a sliced ANOVA across the levels of heart
+disease.
+
+__Solution:__ Based on the slicing analysis we find that `DrugDose` is 
+statistically significant for patients with Diseases A and B.
+
+\singlespacing
+
+```{r 1c}
+sliced_aov <- drugdose %>%
+  group_by(Disease) %>%
+  nest() %>%
+  mutate(aov = map(data, ~summary(aov(BloodP ~ DrugDose, data = .x))))
+
+print(sliced_aov$aov)
+```
+
+\doublespacing
+
+\newpage
+
+# Question 2
+
+A computer service center has four technicians who specialize in repairing three
+brands of computer disk drives for desktop computers. The service center wants
+to study the effects of the technician and brand of the disk drive on the
+service time.
+
+This dataset has the following variables:
+
++ `Technician`: name of the technician (Angela, Bob, Justin, or Karen)
+
++ `Brand`: brand of disk drive (1, 2, or 3)
+
++ `Time`: time for repair (in minutes)
+
+__a.__ Generate a 2-Way ANOVA with `Time` as the dependent variable and `Technician`
+and `Brand` as the independent variables (HINT: Make sure `Brand` is a factor in 
+your model since it is stored as a number). Include the interaction between the
+independent variables in your model. Assume a level of significance of 0.05. Is
+the overall F test significant in your model? Is there a significant interaction?
+
+__Solution:__
+
+\singlespacing
+
+```{r 2a}
+disk.aov <- aov(Time ~ Technician*Brand, data = disks)
+summary(disk.aov)
+```
+
+\doublespacing
+
+__b.__ Is it appropriate to examine the tests for the main effects shown in the
+output?
+
+__Solution:__ No, since there is an interaction effect so it is not necessary.
+
+__c.__ Determine whether there are differences between the technicians for each
+brand of disk drive using sliced ANOVA across the brands of disk drives. Also, 
+examine the Tukey HSD among the values of `Technician` within each slice of 
+`Brand.` What are your conclusions?
+
+__Solution:__ There is a significant difference among Technicians for each brand.
+
+
+\singlespacing
+
+```{r 2c}
+tukey_aov_disk <- disks %>%
+  group_by(Brand) %>%
+  nest() %>%
+  mutate(aov = map(data, ~TukeyHSD(aov(Time ~ Technician, data = .x))))
+
+print(tukey_aov_disk$aov)
+```
+
+```{r 2c.sliced}
+sliced_aov_disk <- disks %>%
+  group_by(Brand) %>%
+  nest() %>%
+  mutate(aov = map(data, ~summary(aov(Time ~ Technician, data = .x))))
+
+print(sliced_aov_disk$aov)
+```
+
