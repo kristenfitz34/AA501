@@ -1,0 +1,109 @@
+---
+title: "Lab 8"
+subtitle: "AA 501" 
+author: "Kristen Fitzgerald"
+date: "2024-07-08"
+output: pdf_document
+header-includes:
+  - \usepackage{setspace}
+  - \doublespacing
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# loading packages
+library(tidyverse)
+
+cafeteria <- c(1:14)
+dispensers <- c(0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6)
+sales <- c(507.9, 498.0, 568.3, 575.5, 651.6, 657.1, 713.8, 699.6,
+           758.4, 765.7, 797.7, 814.3, 836.8, 825.1)
+```
+
+# Question 1
+
+Perform a simple linear regression with `sales` as the response and `dispensers`
+as the predictor variable. What do you see in the residual versus predicted
+plot? What would you do to fix this problem?
+
+__Solution:__ In the SLR model there appears to be a quadratic relationship
+between `dispensers` and the residuals. We can likely fix this problem by 
+fitting a quadratic regression equation between `dispensers` and `sales`.
+
+\singlespacing
+
+```{r Q1, out.width="50%"}
+slr.sales <- lm(sales ~ dispensers)
+
+ggplot(slr.sales, aes(x = dispensers, y = resid(slr.sales)))  +
+  geom_point(color="blue",size=3) + 
+  labs(title="Residual plot", x="Dispensers", y="Residuals")
+```
+
+\doublespacing
+
+\newpage
+
+# Question 2
+
+Perform a forward selection (by hand) using the AIC criteria (you will need to
+use the command AIC(model) to get the AIC values for each model). The “smallest”
+model should be the just the intercept. The “biggest” model should be Dispensers
+up to the power of 4 (be sure to follow model hierarchy). What was the best
+degree for the polynomial based on AIC?
+
+__Solution:__ The best degree for the polynomial was 2 based on the AIC.
+
+\singlespacing
+
+```{r Q2.intercept}
+int.model <- lm(sales ~ 1)
+
+paste0("Intercept Model AIC:", " ", round(AIC(int.model), 2))
+```
+
+```{r Q2.model1}
+model1 <- lm(sales ~ dispensers)
+
+paste0("Model 1 AIC:", " ", round(AIC(model1), 2))
+```
+
+```{r Q2.model2}
+model2 <- lm(sales ~ dispensers + I(dispensers^2))
+
+paste0("Model 2 AIC:", " ", round(AIC(model2), 2))
+```
+
+```{r Q2.model3}
+model3 <- lm(sales ~ dispensers + I(dispensers^2) + I(dispensers^3))
+
+paste0("Model 3 AIC:", " ", round(AIC(model3), 2))
+```
+
+```{r Q2.model4}
+model4 <- lm(sales ~ dispensers + I(dispensers^2) + I(dispensers^3) +
+             I(dispensers^4))
+
+paste0("Model 4 AIC:", " ", round(AIC(model4), 2))
+```
+
+\newpage
+
+# Question 3
+
+Run the model you selected in question 2 and look at the residual versus 
+predicted plot. What do you see?
+
+__Solution:__ The residuals quadratic pattern has nearly disappeared and it 
+appears to hold the assumption of homoscedasticity. 
+
+```{r Q1.quad, out.width="50%"}
+slr.sales.quad <- lm(sales ~ dispensers + I(dispensers^2))
+
+ggplot(slr.sales.quad, aes(x = dispensers, y = resid(slr.sales.quad)))  +
+  geom_point(color="blue",size=3) + 
+  labs(title="Residual plot", x="Dispensers", y="Residuals")
+
+```
+

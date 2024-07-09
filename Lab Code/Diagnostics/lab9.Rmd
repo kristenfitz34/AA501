@@ -1,0 +1,127 @@
+---
+title: "Lab 9"
+author: "Kristen Fitzgerald"
+date: "2024-07-09"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# libraries
+library(AppliedPredictiveModeling)
+library(car)
+library(ggplot2)
+
+# Data
+data(FuelEconomy)
+```
+
+# Question 1 
+
+Using the cars2010 data set, run the regression with the following explanatory
+variables:
+
++ `EngDispl`
+
++ `Transmission`
+
++ `AirAspirationMethod`
+
++ `TransLockup`
+
++ `TransCreeperGear`
+
++ `DriveDesc`
+
++ `IntakeValvePerCyl`
+
++ `CarlineClassDesc`
+
++ `VarValveLift`
+
+```{r Q1}
+cars.lm <- lm(FE ~ EngDispl + Transmission + AirAspirationMethod +
+              TransLockup + TransCreeperGear + DriveDesc +
+              IntakeValvePerCyl + CarlineClassDesc + VarValveLift,
+              data = cars2010)
+
+n.index = seq(1, nrow(cars2010))
+cars_data <- cbind(cars2010, n.index)
+```
+
+__(a)__ Use plots to identify potential influential observations based on the
+suggested cutoff values.
+
+### Studentized Residuals
+
+```{r Student}
+ggplot(cars.lm,  aes( x = n.index, y = rstudent(cars.lm))) +
+  geom_point(color="orange") + 
+  geom_line(y = -3) +
+  geom_line(y = 3) +
+  labs(title = "External Studentized Residuals", x = "Observation",
+       y = "Residuals")
+```
+
+\newpage
+
+### Cook's Distance
+
+```{r CooksD}
+D.cut = 4 / (nrow(cars_data) - 3)
+
+ggplot(cars.lm, aes( x = n.index, y = cooks.distance(cars.lm))) +
+  geom_point(color = "orange") +
+  geom_line(y = D.cut) + 
+  labs(title = "Cook's D", x = "Observation", y = "Cook's Distance")
+```
+
+\newpage
+
+### DFFITS
+
+```{r DFFITS}
+df.cut = 2*(sqrt( 3 / nrow(cars_data)))
+
+ggplot(cars.lm, aes(x = n.index, y = dffits(cars.lm))) + 
+  geom_point(color="orange") + 
+  geom_line(y = df.cut) +
+  geom_line(y = -df.cut) +
+  labs(title = "DFFITS", x="Observation", y="DFFITS")
+
+db.cut = 2 / sqrt(nrow(cars_data))
+
+```
+
+\newpage
+
+### Hat Values
+
+```{r HatValues}
+hat.cut = 2*(3) / nrow(cars_data)
+
+ggplot(cars.lm, aes(x = n.index, y = hatvalues(cars.lm))) +
+  geom_point(color = "orange") +
+  geom_line(y = hat.cut) +
+  labs(title = "Hat values", x="Observation", y="Hat Values")
+```
+
+__b.__ Are there any observations with a dffits larger than 1 AND studentized
+residuals larger than 3 in magnitude? If so, list the observations.
+
+__Solution:__ Yes, observation 1596 has a dffits larger than 1 AND studentized
+residuals larger than 3 in magnitude.
+
+```{r Anomalous}
+Anomalous <- (rstudent(cars.lm) > 3) & (dffits(cars.lm) > 1)
+Anomalous[Anomalous == TRUE]
+```
+
+```{r}
+stud <- abs((rstudent(cars.lm) > 3))
+
+new <- stud[stud == 1]
+length(new)
+```
+
