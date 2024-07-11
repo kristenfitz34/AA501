@@ -1,0 +1,111 @@
+---
+title: "Lab 11"
+author: "Kristen Fitzgerald"
+date: "2024-07-11"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Loading packages
+library(AppliedPredictiveModeling)
+library(glmnet)
+
+# Loading data
+data(FuelEconomy)
+
+cars2010$NumCyl <- factor(cars2010$NumCyl)
+cars2010$NumGears <- factor(cars2010$NumGears)
+cars2010$TransLockup <- factor(cars2010$TransLockup)
+cars2010$TransCreeperGear <- factor(cars2010$TransCreeperGear)
+cars2010$IntakeValvePerCyl <- factor(cars2010$IntakeValvePerCyl)
+cars2010$ExhaustValvesPerCyl <- factor(cars2010$ExhaustValvesPerCyl)
+cars2010$VarValveTiming <- factor(cars2010$VarValveTiming)
+cars2010$VarValveLift <- factor(cars2010$VarValveLift)
+```
+
+# Question 1
+
+This dataset has variables pertaining to fuel economy of various cars. Do not 
+create a training and test set. Just use the whole cars2010 dataset for the 
+following analysis. The cars2011 and cars2012 datasets will be used at later
+time periods.
+
+## Part (a)
+
+Run a LASSO regression predicting the `FE` variable using all the remaining
+variables. Some of these predictor variables are coded as numeric, but should
+be treated as categorical. The only numeric variables in your dataset should be
+`EngDispl.` All remaining variables are categorical.
+
+__a.__ Plot the coefficients and how they change across different levels of
+lambda.
+
+__Solution:__ 
+
+```{r Part.a}
+train.x <- model.matrix(FE ~ ., data = cars2010)[, -1]
+
+train.y <- cars2010$FE
+
+cars.lasso <- glmnet(x = train.x, y = train.y, alpha = 1)
+
+plot(cars.lasso, xvar = "lambda")
+```
+
+\newpage
+
+## Part (b)
+
+Perform a CV LASSO to optimize the lambda value
+
+__a.__ What is the value of lambda that minimizes the MSE?
+
+__Solution:__ $\lambda$ = 0.003
+
+```{r Part.b.a}
+cars.lasso.cv <- cv.glmnet(x = train.x, y = train.y, alpha = 1)
+
+plot(cars.lasso.cv)
+
+print(cars.lasso.cv$lambda.min)
+```
+\newpage
+
+__b.__ What is the value of lambda one standard error above the minimum MSE
+value?
+
+__Solution:__ $\lambda$ = 0.130
+
+```{r Part.b.b}
+print(cars.lasso.cv$lambda.1se)
+```
+
+\newpage
+
+__c.__ How many variables are left at the penalty value that is one standard 
+error above the minimum MSE value (think of variables as a whole, not per 
+category)? (HINT: Look at the coefficients from the model with coef function.)
+
+__Solution:__ 13 variables are left in the model.
+
+```{r Part.b.c}
+coef(cars.lasso, s = cars.lasso.cv$lambda.1se)
+```
+
+\newpage
+
+## Part (c)
+
+Obtain the variables from the LASSO regression at the penalty value that is one
+standard error above the minimum MSE value. The multiple linear regression with 
+p-value selection (Lab 6) left the variables `EngDispl`, `NumCyl`, 
+`Transmission`, `AirAspirationMethod`, `NumGears`, `TransLockup`, 
+`DriveDesc`, `IntakeValvePerCyl`, `CarlineClassDesc`, and `VarValveLift.`
+
+__a.__ What variables were left in your LASSO at the 1SE above minimum MSE
+penalty value?
+
+__Solution:__ All 13 variables were left in the model.
+

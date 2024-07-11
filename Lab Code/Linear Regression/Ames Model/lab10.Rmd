@@ -27,7 +27,7 @@ test <- anti_join(ames, train, by = 'id')
 third.lm <- lm(log(Sale_Price) ~ Neighborhood*Overall_Cond + Garage_Area +
                  TotRms_AbvGrd  + Garage_Type +
                  Kitchen_Qual + Full_Bath + Central_Air + Functional +
-                 Total_Bsmt_SF + Overall_Cond, data = train.4)
+                 Total_Bsmt_SF + Overall_Cond, data = train)
 
 AIC(third.lm)
 
@@ -142,7 +142,11 @@ test.1 <- subset(test, select = c(Neighborhood, Garage_Area,
 
 valid.fit = exp(predict(third.lm, newdata = test.1))
 
-MAE=mean(abs(test.1$Sale_Price-valid.fit))
+MAE = mean(abs(test.1$Sale_Price-valid.fit))
 MAE
+
+test.1 %>%
+ mutate(lm_APE = 100*abs((Sale_Price - valid.fit)/Sale_Price)) %>%
+ dplyr::summarise(MAPE_lm = mean(lm_APE))
 ```
 
