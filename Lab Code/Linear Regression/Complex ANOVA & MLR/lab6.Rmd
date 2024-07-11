@@ -1,0 +1,182 @@
+---
+title: "Lab 6"
+subtitle: "AA 501"
+author: "Kristen Fitzgerald"
+date: "2024-07-03"
+output: pdf_document
+header-includes:
+  - \usepackage{setspace}
+  - \doublespacing
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# libraries
+library(AppliedPredictiveModeling)
+
+# Data
+data(FuelEconomy)
+
+cars2010$NumCyl <- factor(cars2010$NumCyl)
+cars2010$NumGears <- factor(cars2010$NumGears)
+cars2010$TransLockup <- factor(cars2010$TransLockup)
+cars2010$TransCreeperGear <- factor(cars2010$TransCreeperGear)
+cars2010$IntakeValvePerCyl <- factor(cars2010$IntakeValvePerCyl)
+cars2010$ExhaustValvesPerCyl <- factor(cars2010$ExhaustValvesPerCyl)
+cars2010$VarValveTiming <- factor(cars2010$VarValveTiming)
+cars2010$VarValveLift <- factor(cars2010$VarValveLift)
+```
+
+# Question 1
+
+This dataset has variables pertaining to fuel economy of various cars. Do not
+create a training and test set. Just use the whole cars2010 dataset for the
+following analysis. The cars2011 and cars2012 datasets will be used at late
+time periods.
+
+## Part (a)
+Run a regression predicting the `FE` variable using all the remaining variables. 
+Some of these predictor variables are coded as numeric, but should be treated as
+categorical. The only numeric variables in your dataset should be `EngDispl`.
+All remaining variables are categorical.
+
+__a.__ Perform a Global F-test. What is your conclusion?
+
+__Solution:__ We find a global F-stat of 95.55 with a p-value < 2.2e-16. Thus,
+we know that at least one variable is useful in predicting the `FE`. 
+
+\singlespacing
+
+```{r PartA.a}
+cars.mlr <- lm(FE ~ EngDispl + NumCyl + Transmission + AirAspirationMethod + 
+                 NumGears + TransLockup + TransCreeperGear + DriveDesc + 
+                 IntakeValvePerCyl + ExhaustValvesPerCyl + CarlineClassDesc +
+                 VarValveTiming + VarValveLift, data = cars2010)
+
+summary(cars.mlr)
+```
+
+\doublespacing
+
+__b.__ What percent of variation in fuel economy (FE) is explained by these 13
+variables?
+
+__Solution:__ We found that 83.33% of the variation in the model is explained 
+by all 13 predictor variables.
+
+\newpage
+
+## Part (b)
+
+Trying to evaluate categorical variables in traditional linear regression output
+can be difficult because the p-values are for each categorical dummy variable.
+To evaluate the inclusion of a variable as a whole, you need a global p-value
+for each categorical variable.
+
+__a.__ . Use the `car::Anova` function in R on your linear regression object to
+get the p-values for each categorical variable.
+
+__Solution:__
+
+\singlespacing
+
+```{r PartB.a}
+car::Anova(cars.mlr)
+```
+
+\doublespacing
+
+__b.__ Which of the variables has the highest p-value?
+
+__Solution:__ The variable `VarValveTiming` has the highest p-value.
+
+## Part (c)
+
+Rerun the preceding model, but remove the variable with the highest p-value that
+you found with the “car::Anova” function. Compare the output with the preceding
+model.
+
+__a.__ Did the p-value for the model change notably?
+
+__Solution:__ No, model did not change notably. The F-statistic increased by
+less than 2.
+
+\singlespacing
+
+```{r PartC.a}
+cars.mlr2 <- lm(FE ~ EngDispl + NumCyl + Transmission + AirAspirationMethod + 
+                 NumGears + TransLockup + TransCreeperGear + DriveDesc + 
+                 IntakeValvePerCyl + ExhaustValvesPerCyl + CarlineClassDesc +
+                 VarValveLift, data = cars2010)
+
+summary(cars.mlr2)
+```
+
+\doublespacing
+
+__b.__ Did the R-square and adjusted R-square values change notably?
+
+__Solution:__ No, they stayed nearly identical. 
+
+__c.__ Did the p-values on other variables change notably?
+
+__Solution:__ No, they stayed nearly identical.
+
+\newpage
+
+## Part (d)
+
+Again, rerun the preceding model (from question c), but eliminate the variable
+with the highest p-value. Repeat this process of eliminating one variable at a
+time and rerunning the regression until you only have variables significant at
+the 0.008 level. Remember to run the model after EACH variable you remove as 
+the p-value might change by removing a variable.
+
+__a.__ Did the R-square and adjusted R-square values change notably?
+
+__Solution:__ No, they did not.
+
+__b.__ How many variables did you have left that were significant at the 0.008 
+level?
+
+__Solution:__ We have 9 variables left.
+
+\singlespacing
+
+```{r PartD.a}
+car::Anova(cars.mlr2)
+```
+
+
+```{r PartD.a2}
+cars.mlr3 <- lm(FE ~ EngDispl + NumCyl + Transmission + AirAspirationMethod + 
+                 NumGears + TransLockup + TransCreeperGear + DriveDesc + 
+                 ExhaustValvesPerCyl + CarlineClassDesc +
+                 VarValveLift, data = cars2010)
+
+car::Anova(cars.mlr3)
+```
+
+
+```{r PartD.a3}
+cars.mlr4 <- lm(FE ~ EngDispl + NumCyl + Transmission + AirAspirationMethod + 
+                 NumGears + TransCreeperGear + DriveDesc + 
+                 ExhaustValvesPerCyl + CarlineClassDesc +
+                 VarValveLift, data = cars2010)
+
+car::Anova(cars.mlr4)
+```
+
+```{r PartD.a4}
+cars.mlr4 <- lm(FE ~ EngDispl + NumCyl + Transmission + AirAspirationMethod + 
+                 NumGears + TransCreeperGear + DriveDesc + 
+                 ExhaustValvesPerCyl + CarlineClassDesc, data = cars2010)
+
+car::Anova(cars.mlr4)
+```
+
+```{r FinalSummary}
+summary(cars.mlr4)
+```
+

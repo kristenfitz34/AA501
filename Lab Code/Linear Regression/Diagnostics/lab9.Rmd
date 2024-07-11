@@ -45,6 +45,7 @@ cars.lm <- lm(FE ~ EngDispl + Transmission + AirAspirationMethod +
               TransLockup + TransCreeperGear + DriveDesc +
               IntakeValvePerCyl + CarlineClassDesc + VarValveLift,
               data = cars2010)
+summary(cars.lm)
 
 n.index = seq(1, nrow(cars2010))
 cars_data <- cbind(cars2010, n.index)
@@ -119,7 +120,7 @@ Anomalous[Anomalous == TRUE]
 ```
 
 ```{r}
-stud <- abs((rstudent(cars.lm) > 3))
+stud <- abs((rstudent(third.lm) > 3))
 
 new <- stud[stud == 1]
 length(new)

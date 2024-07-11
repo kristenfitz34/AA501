@@ -1,0 +1,98 @@
+---
+title: "Lab 7"
+author: "Kristen Fitzgerald"
+date: "2024-07-07"
+output: pdf_document
+header-includes:
+  - \usepackage{setspace}
+  - \doublespacing
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# libraries
+library(AppliedPredictiveModeling)
+
+# Data
+data(FuelEconomy)
+
+cars2010$NumCyl <- factor(cars2010$NumCyl)
+cars2010$NumGears <- factor(cars2010$NumGears)
+cars2010$TransLockup <- factor(cars2010$TransLockup)
+cars2010$TransCreeperGear <- factor(cars2010$TransCreeperGear)
+cars2010$IntakeValvePerCyl <- factor(cars2010$IntakeValvePerCyl)
+cars2010$ExhaustValvesPerCyl <- factor(cars2010$ExhaustValvesPerCyl)
+cars2010$VarValveTiming <- factor(cars2010$VarValveTiming)
+cars2010$VarValveLift <- factor(cars2010$VarValveLift)
+```
+
+# Question 1
+
+## Part (a)
+
+Build a regression model predicting the `FE` variable using all the remaining
+variables. Some of these predictor variables are coded as numeric, but should be
+treated as categorical. The only numeric variables in your dataset should be 
+`EngDispl`. All remaining variables are categorical. Use __forward__ selection
+with a __0.1 p-value selection criterion__.
+
+__a.__ What is the final model?
+
+__Solution:__
+
+`FE` ~ `EngDispl` + `CarlineClassDesc` + `NumCyl` + `DriveDesc` + `Transmission` + 
+    `IntakeValvePerCyl` + `VarValveLift` + `AirAspirationMethod` + 
+    `NumGears` + `TransLockup` + `TransCreeperGear` + `ExhaustValvesPerCyl`
+
+```{r Q1a, results = "hide"}
+# starting model, most start with zero variables - intercept only model
+empty.model <- lm(FE ~ 1, data = cars2010) 
+
+# Upper model, starts with all variables 
+full.model <- lm(FE ~ ., data = cars2010)
+
+for.model <- step(empty.model,
+                  scope = list(lower = empty.model,
+                               upper = full.model),
+                  direction = "forward",
+                  k = qchisq(0.1, 1, lower.tail = FALSE))
+```
+
+__b.__ What was the first variable added?
+
+__Solution:__ The first variable added was `EngDispl`.
+
+__c.__ What was the last variable added?
+
+__Solution:__ The last added variable was `ExhaustValvesPerCyl`.
+
+## Part(b)
+
+Instead of the previous approach, now use __stepwise selection__ with a
+__BIC criterion__.
+
+__a.__ How many variables (not parameter estimates) are left?
+
+__Solution:__ There are 8 variables left.
+
+`FE` ~ `EngDispl` + `DriveDesc` + `CarlineClassDesc` + `NumCyl` + `ExhaustValvesPerCyl` + 
+    `NumGears` + `AirAspirationMethod` + `TransCreeperGear`
+
+```{r Q1b, results = "hide"}
+empty.model <- lm(FE ~ 1, data = cars2010) 
+
+full.model <- lm(FE ~ ., data = cars2010)
+
+for.model <- step(empty.model,
+                  scope = list(lower = empty.model,
+                               upper = full.model),
+                  direction = "both", k = log(nrow(cars2010)))
+```
+
+__b.__ Are these the same variables as with the forward selection?
+
+__Solution:__ The forward selection included 12 variables and stepwise included
+8. The similar variables include: `EngDispl`, `DriveDesc`, `CarlineClassDesc`,
+`NumCyl`, `ExhaustValvesPerCyl`, `NumGears`, `AirAspirationMethod`, and 
+`TransCreeperGear`. All variables in the stepwise were in the forward model, 
+however, `Transmission`, `IntakeValvePerCyl`, `VarValveLift`, and `TransLockup`. 

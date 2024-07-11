@@ -1,0 +1,148 @@
+---
+title: "Ames Housing Model"
+subtitle: "Lab 10"
+author: "Kristen Fitzgerald"
+date: "2024-07-10"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Loading packages
+library(tidyverse)
+library(AmesHousing)
+library(ggplot2)
+library(car)
+
+# loading data
+ames <- make_ordinal_ames()
+
+# Traing-Test Split in R
+set.seed(123)
+ames <- ames %>% mutate(id = row_number())
+train <- ames %>% sample_frac(0.7)
+test <- anti_join(ames, train, by = 'id')
+
+third.lm <- lm(log(Sale_Price) ~ Neighborhood*Overall_Cond + Garage_Area +
+                 TotRms_AbvGrd  + Garage_Type +
+                 Kitchen_Qual + Full_Bath + Central_Air + Functional +
+                 Total_Bsmt_SF + Overall_Cond, data = train.4)
+
+AIC(third.lm)
+
+plot(third.lm, which = 2)
+
+n.index = seq(1, nrow(train.4))
+
+ggplot(third.lm,  aes( x = n.index, y = rstudent(third.lm))) +
+  geom_point(color="orange") + 
+  geom_line(y = -3) +
+  geom_line(y = 3) +
+  labs(title = "External Studentized Residuals", x = "Observation",
+       y = "Residuals")
+
+```
+
+# EDA 
+
+```{r}
+summary(train)
+```
+
+```{r}
+train.1 <- train[, c('Lot_Area','Neighborhood','Garage_Area',
+                     'Gr_Liv_Area','TotRms_AbvGrd','Sale_Condition','Sale_Type',
+                     'Year_Sold','Fence','Open_Porch_SF','Paved_Drive',
+                     'Garage_Type','Garage_Finish','Garage_Cars','Functional',
+                     'Kitchen_Qual','Kitchen_AbvGr','Bedroom_AbvGr','Full_Bath',
+                     'Half_Bath','Second_Flr_SF','First_Flr_SF','Central_Air',
+                     'Total_Bsmt_SF','Bsmt_Cond','Foundation','Exter_Cond',
+                     'Year_Built','Overall_Cond','Bldg_Type',
+                     'Lot_Config','Lot_Shape','Lot_Frontage','Sale_Price')]
+```
+
+```{r}
+numeric = train.1 %>% select(where(is.numeric))
+
+cor(numeric)
+
+train.2 <- subset(train.1, select = -c(Lot_Frontage, Year_Sold))
+
+```
+
+```{r}
+first.lm <- lm(log(Sale_Price) ~ ., data=train.2)
+vif(first.lm)
+```
+
+```{r}
+train.3 <- subset(train.2, select = -c(Gr_Liv_Area, Second_Flr_SF, First_Flr_SF,
+                                       Year_Built))
+```
+
+```{r}
+second.lm <- lm(log(Sale_Price) ~ ., data=train.3)
+vif(second.lm)
+```
+
+```{r}
+summary(second.lm)
+car::Anova(second.lm)
+```
+
+```{r}
+train.4 <- subset(train.3, select = c(Neighborhood, Garage_Area, 
+                                      TotRms_AbvGrd, Sale_Condition, Paved_Drive, 
+                                      Garage_Type, Functional, Kitchen_Qual,
+                                      Full_Bath,
+                                      Central_Air, Total_Bsmt_SF, 
+                                      Overall_Cond, Sale_Price))
+
+full.model <- lm(log(Sale_Price) ~ ., data = train.4)
+empty.model <- lm(log(Sale_Price) ~ 1, data = train.4)
+
+# Start with full model
+back.model <- step(third.lm,
+                   scope = list(lower = empty.model,
+                                upper = third.lm),
+                   direction = "backward", k = 2)
+```
+
+```{r}
+third.lm <- lm(log(Sale_Price) ~ Neighborhood*Overall_Cond + Garage_Area +
+                 TotRms_AbvGrd  + Garage_Type +
+                 Kitchen_Qual + Full_Bath + Central_Air + Functional +
+                 Total_Bsmt_SF + Overall_Cond, data = train.4)
+
+summary(third.lm)
+
+Anova(third.lm)
+
+ggplot(third.lm, aes(x=fitted.values(third.lm), 
+                     y=resid(third.lm))) +
+  geom_point()
+
+plot(third.lm, which=2)
+
+AIC(third.lm)
+
+numeric2 <- train.4 %>% select(where(is.numeric))
+
+cor(numeric2)
+```
+
+```{r}
+test.1 <- subset(test, select = c(Neighborhood, Garage_Area, 
+                                      TotRms_AbvGrd, 
+                                      Garage_Type, Functional, Kitchen_Qual,
+                                      Full_Bath,
+                                      Central_Air, Total_Bsmt_SF, 
+                                      Overall_Cond, Sale_Price))
+
+valid.fit = exp(predict(third.lm, newdata = test.1))
+
+MAE=mean(abs(test.1$Sale_Price-valid.fit))
+MAE
+```
+
