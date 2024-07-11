@@ -70,3 +70,17 @@ ggplot(lm.model, aes(x = n.index, y = dfbetas(lm.model)[,'Distance'])) +
   geom_line(y = db.cut) +
   geom_line(y = -db.cut) +
   labs(title = "DFBETA for Distance", x = "Observation", y = "DFBETAS")
+
+n.index = seq(1, nrow(train))
+
+ggplot(third.lm,  aes( x = n.index, y = rstudent(third.lm))) +
+  geom_point(color="orange") + 
+  geom_line(y = -3) +
+  geom_line(y = 3) +
+  labs(title = "External Studentized Residuals", x = "Observation",
+       y = "Residuals")
+
+test <- abs(rstudent(third.lm) => 3)
+
+test[test == 1]
+

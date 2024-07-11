@@ -1,0 +1,114 @@
+---
+title: "Complete Example"
+author: "Kristen Fitzgerald"
+date: "2024-07-10"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# libraries
+library(AppliedPredictiveModeling)
+library(car)
+library(ggplot2)
+
+# Data
+data(FuelEconomy)
+```
+
+# EDA 
+
++ Explore variables univariately
+
++ Anything that looks unusual?
+
++ Missing values?
+
++ Data types
+
+### Explore variables univariately
+
+```{r summary}
+summary(cars2010)
+```
+
+### Multicollinearity
+
++ See if multicollinearity is an issue
+
++ If so, how do you want to deal with it?
+
+Looking at correlation. Removing `NumCyl` and `IntakeValvePerCyl`. Correlation
+0.9 or above to remove. 
+
+```{r multicollinearity}
+cor(cars2010[,c(1,2,4,6,7,8,10,11,13,14)])
+
+# Removing  NumCyl and IntakeValvePerCyl
+cars2010.1 = cars2010[,-c(2,10)]
+```
+
+Test for `vif()` for multicollinearity.
+
+```{r multicollinearity2}
+collin.test = lm(FE ~ ., data=cars2010.1)
+
+vif(collin.test)
+```
+
+Table of `transmission` with `NumGears`. They are very similar so going to remove
+`transmission`. Felt that is was duplicated information.
+
+```{r}
+table(cars2010$Transmission, cars2010$NumGears)
+
+cars2010.2 = cars2010.1[,-c(2)]
+```
+
+Taking another look at multicollinearity. 
+
+```{r}
+lm.1 <- lm(FE ~ ., data=cars2010.2)
+vif(lm.1)
+```
+
+When looking at outliers more into the variables, she found that `CarlineClassDesc`
+and `DriveDesc` seemed weird. Decided to remove `CarlineClassDesc`.
+
+```{r}
+summary(aov(FE ~ CarlineClassDesc, data = cars2010.2))
+
+summary(aov(FE ~ DriveDesc, dat = cars2010.2))
+
+cars2010.3 = cars2010.2[,-c(9)]
+```
+
+Also, observations 192 and 193 have 0 intake AND 0 exhaust valves per cylinder 
+(recording error). Going to remove these two observations for the analysis.
+Also going to make `NumGears` a factor too. Let’s try some automated search
+algorithms….
+
+```{r}
+lm.1 <- lm(FE ~ EngDispl + DriveDesc + NumGears + ExhaustValvesPerCyl +
+             VarValveLift + TransLockup + TransCreeperGear + 
+             AirAspirationMethod + VarValveTiming, data = cars2010.3)
+
+ggplot(lm.1, aes(x = fitted.values(lm.1), y = resid(lm.1))) +
+  geom_point()
+```
+
+```{r}
+ggplot(lm.1, aes(x = EngDispl, y = resid(lm.1))) +
+  geom_point()
+```
+
+```{r}
+m.engdispl = mean(cars2010.3$EngDispl)
+cars2010.3$c.EngDispl =cars2010.3$EngDispl-m.engdispl
+
+lm.4=lm(FE~c.EngDispl+I(c.EngDispl^2)+DriveDesc+ExhaustValvesPerCyl+NumGears+Tra
+nsCreeperGear+AirAspirationMethod+DriveDesc:c.EngDispl +
+c.EngDispl:NumGears,data=cars2010.3) 
+```
+
