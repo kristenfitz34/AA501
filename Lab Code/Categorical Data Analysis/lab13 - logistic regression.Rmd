@@ -1,0 +1,106 @@
+---
+title: "Lab 13"
+subtitle: "Logistic Regression"
+author: "Kristen Fitzgerald"
+date: "2024-07-16"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+safety <- read.csv('https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/safety.csv')
+
+# Loading packages
+library(tidyverse)
+library(survival)
+```
+
+# Question 1
+Data were collected in an effort to relate the safety of certain vehicles to 
+different aspects of those vehicles.
+
+This dataset has the following variables:
+
++ `Unsafe`: binary safety designation (1 = below average (unsafe), 
+0 = average or above average (safe))
+
++ `Type`: type of car (Large, Medium, Small, Sport/Utility, Sports)
+
++ `Region`: manufacturing region (Asia, N America)
+
++ `Weight`: integer value for car weight ranging from 1 to 6
+
++ `Size`: size of car corresponding to Type (1 = Small/Sports, 2 = Medium,
+3 = Large or Sport/Utility)
+
+## Part (a)
+
+Build a logistic regression, predicting `Unsafe` using the variables `Region`,
+`Weight`, and `Size.` Treat `Weight` as a continuous variable. Treat `Region`
+and `Size` as categorical. Make sure to use the factor function for `Size`.
+
+```{r Part.a}
+safety$Size <- as.factor(safety$Size)
+
+safety.glm <- glm(Unsafe ~ Region + Weight + Size, data = safety,
+                   family = binomial(link = "logit"))
+
+summary(safety.glm)
+```
+
+__a.__ Which variables were significant at the 0.05 level?
+
+__Solution:__ The variables that were significant at the 0.05 level were `Size2`
+and `Size3`.
+
+__b.__ What is the concordance proportion for this model?
+
+__Solution:__ This model has a concordance proportion of 0.8543.
+
+```{r Part.a.b}
+concordance(safety.glm)
+```
+
+## Part (b)
+
+Remove variables one at a time that have a p-value above 0.05.
+
+```{r Part.b}
+safety.glm2 <- glm(Unsafe ~ Size, data = safety, 
+                   family = binomial(link = "logit"))
+
+summary(safety.glm2)
+```
+
+__a.__ What variables are left in the model?
+
+__Solution:__ `Size` is the only variable left in the model.
+
+__b.__ What is the proportion of concordance with your final model?
+
+__Solution:__ The concordance proportion is 0.8182.
+
+```{r Part.b.b}
+concordance(safety.glm2)
+```
+
+__c.__ What is the interpretation of the `Size` variable for comparing categories
+1 to 3?
+
+__Solution:__ Cars of `Size2` decreases the expected odds of being unsafe by 
+89.13% compared to cars of `Size1`.
+
+or 
+
+Cars of `Size2` increases the expected odds of being safe by 
+89.13% compared to cars of `Size1`.
+
+Cars of `Size3` increases the expected odds of being safe by 96.52% when 
+compared to cars of `Size1`.
+
+
+```{r coef, warning = F, message = F}
+100*(exp(cbind(coef(safety.glm2), confint(safety.glm2)))-1)
+```
+
