@@ -1,0 +1,142 @@
+---
+title: "Lab 12"
+subtitle: "Categorical Data Analysis"
+author: "Kristen Fitzgerald"
+date: "2024-07-15"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+safety <- read.csv('https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/safety.csv')
+
+# Loading packages
+library(tidyverse)
+library(DescTools)
+library(gmodels)
+library(vcdExtra)
+```
+
+# Question 1
+Data were collected in an effort to relate the safety of certain vehicles to 
+different aspects of those vehicles.
+
+This dataset has the following variables:
+
++ `Unsafe`: binary safety designation (1 = below average (unsafe), 
+0 = average or above average (safe))
+
++ `Type`: type of car (Large, Medium, Small, Sport/Utility, Sports)
+
++ `Region`: manufacturing region (Asia, N America)
+
++ `Weight`: integer value for car weight ranging from 1 to 6
+
++ `Size`: size of car corresponding to Type (1 = Small/Sports, 2 = Medium,
+3 = Large or Sport/Utility)
+
+## Part (a)
+
+Which variables are continuous, nominal, ordinal?
+
+__Solution:__ 
+
++ `Unsafe`: Ordinal
+
++ `Type`: Nominal
+
++ `Region`: Nominal
+
++ `Weight`: Ordinal
+
++ `Size`: Ordinal
+
+\newpage
+
+## Part (b)
+
+Examine the association between Region and Unsafe. 
+
+__a.__ What percentage of cars manufactured in Asia were classified as unsafe?
+
+__Solution:__ 42.9% of cars manufactured in Asia were classified as unsafe.
+
+```{r Part.b.a}
+CrossTable(safety$Region, safety$Unsafe)
+```
+
+__b.__ What percentage of cars classified as safe were manufactured in North
+America?
+
+__Solution:__ 75.4% of cars manufactured in North America were classified as
+unsafe.
+
+\newpage
+
+__c.__ What is the appropriate test to use?
+
++ State the null and alternative hypothesis for the test.
+
++ At an alpha of 0.05, what is your decision?
+
+__Solution:__ We will use Fisher's Exact test since we are dealing with
+one ordinal variable and one nominal variable and we fail the assumptions 
+necessary for Pearson's and the Likelihood Ratio Chi-Square Tests.
+The null hypothesis is that there is no association. The distribution of one
+variable does not change across levels of another. The alternative hypothesis 
+is that there is an association. The distribution of one variable changes across
+levels of another. We fail to reject the null hypothesis, there is not 
+statistically significant evidence to conclude that the distribution of `Region`
+changes across the levels of `Unsafe`. 
+
+
+```{r Part.b.c}
+fisher.test(table(safety$Region, safety$Unsafe))
+```
+
+__d.__ Regardless of significance, interpret the odds ratio in the context of 
+the problem.
+
+__Solution:__ Cars made in Asia have 0.43 times the likelihood (odds) of being
+classified as safe as compared to cars made in North America.
+
+```{r}
+OddsRatio(table(safety$Region, safety$Unsafe))
+```
+
+\newpage
+
+## Part (c)
+
+Examine the association between `Size` and `Unsafe`.
+
+__a.__ What is the appropriate test to use for association?
+
++ At an alpha of 0.05, what is your decision?
+
+__Solution:__ We will use the Mantel-Haenszel Chi-Square Test because both 
+variables are ordinal. We reject the null hypothesis in favor of the alternative.
+There is statistically significant evidence to conclude that the
+distribution of `Unsafe` changes across different levels of `Size`.
+
+```{r Part.c.a1}
+CMHtest(table(safety$Size, safety$Unsafe))$table[1,]
+```
+
+
+```{r Part.c.a}
+CrossTable(safety$Size, safety$Unsafe)
+```
+
+__b.__ How strong is the association between these variables?
+
+__Solution:__ Using Spearman's rank test we find a measure of association of 
+$\rho = -0.54$.
+
+```{r Part.c.b}
+cor.test(x = as.numeric(ordered(safety$Size)),
+         y = as.numeric(ordered(safety$Unsafe)),
+         method = "spearman")
+```
+
